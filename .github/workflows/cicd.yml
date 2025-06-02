@@ -1,4 +1,3 @@
-# .github/workflows/ci-cd.yml
 name: シンプルDocker CI/CDパイプライン
 
 on:
@@ -10,124 +9,124 @@ jobs:
   test-and-deploy:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: コードチェックアウト
-      uses: actions/checkout@v4
+      - name: コードチェックアウト
+        uses: actions/checkout@v4
 
-    - name: PR情報からユーザー名抽出
-      id: get_user
-      run: |
-        SOURCE_BRANCH="${{ github.event.pull_request.head.ref }}"
-        if [[ "$SOURCE_BRANCH" =~ ^user/(.+)$ ]]; then
-          USER_ENV="${BASH_REMATCH[1]}"
-          echo "user_env=$USER_ENV" >> $GITHUB_OUTPUT
-          echo "🚀 デプロイ対象: $USER_ENV"
-        else
-          echo "❌ 対象外のブランチです"
-          exit 1
-        fi
-
-    - name: シンプルDockerでテスト実行
-      run: |
-        echo "🐳 シンプルDocker環境でテスト実行中..."
-        
-        # Dockerビルド
-        docker build -t php-cicd-test .
-        
-        # テスト実行
-        docker run --rm -v $PWD:/app -w /app php-cicd-test \
-          sh -c "
-            echo '📦 依存関係確認...'
-            composer install --no-progress
-            
-            echo '🔍 PHP構文チェック...'
-            php -l index.php
-            
-            echo '🛡️ 基本セキュリティチェック...'
-            if grep -E 'eval|exec|system|shell_exec' index.php; then
-              echo '❌ 危険な関数検出'
-              exit 1
-            fi
-            
-            echo '🧪 PHPUnitテスト実行（2つのテスト）...'
-            composer test
-            
-            echo '✅ 全テスト完了'
-          "
-
-    - name: EC2にシンプルDockerデプロイ
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          USER_ENV="${{ steps.get_user.outputs.user_env }}"
-          
-          echo "🐳 $USER_ENV 環境にシンプルDockerデプロイ開始..."
-          
-          # 最新コード取得
-          cd /tmp
-          rm -rf simple-php-cicd
-          git clone https://github.com/${{ github.repository }}.git simple-php-cicd
-          cd simple-php-cicd
-          
-          # 既存コンテナ停止・削除
-          docker stop cicd-$USER_ENV 2>/dev/null || true
-          docker rm cicd-$USER_ENV 2>/dev/null || true
-          
-          # Dockerイメージビルド
-          docker build -t php-cicd-$USER_ENV .
-          
-          # ポート番号決定
-          case $USER_ENV in
-            alice) PORT=8001 ;;
-            bob) PORT=8002 ;;
-            charlie) PORT=8003 ;;
-            diana) PORT=8004 ;;
-            *) PORT=8000 ;;
-          esac
-          
-          # シンプルDockerコンテナ起動
-          docker run -d \
-            --name cicd-$USER_ENV \
-            -p $PORT:80 \
-            php-cicd-$USER_ENV
-          
-          # ヘルスチェック
-          sleep 5
-          if curl -f http://localhost:$PORT/ > /dev/null 2>&1; then
-            echo "✅ $USER_ENV 環境ヘルスチェック成功"
+      - name: PR情報からユーザー名抽出
+        id: get_user
+        run: |
+          SOURCE_BRANCH="${{ github.event.pull_request.head.ref }}"
+          if [[ "$SOURCE_BRANCH" =~ ^user/(.+)$ ]]; then
+            USER_ENV="${BASH_REMATCH[1]}"
+            echo "user_env=$USER_ENV" >> $GITHUB_OUTPUT
+            echo "🚀 デプロイ対象: $USER_ENV"
           else
-            echo "❌ $USER_ENV 環境ヘルスチェック失敗"
+            echo "❌ 対象外のブランチです"
             exit 1
           fi
-          
-          echo "🎉 シンプルDockerデプロイ完了: https://${{ secrets.EC2_HOST }}:$PORT/"
 
- - name: デプロイ成功通知
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const userEnv = '${{ steps.get_user.outputs.user_env }}';
-          const portMap = {alice: 8001, bob: 8002, charlie: 8003, diana: 8004};
-          const port = portMap[userEnv] || 8000;
-          const url = 'https://${{ secrets.EC2_HOST }}:' + port + '/';
-          
-          await github.rest.issues.createComment({
-            issue_number: context.payload.pull_request.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: '🎉 **シンプルDocker CI/CDパイプライン完了!!**\n\n' +
-                  '**テスト結果** ✅\n' +
-                  '- ✅ シンプルDocker環境でビルド成功\n' +
-                  '- ✅ PHP構文チェック通過\n' +
-                  '- ✅ セキュリティチェック通過  \n' +
-                  '- ✅ 2つのPHPUnitテスト通過\n\n' +
-                  '**デプロイ結果** 🐳\n' +
-                  '- 👤 **' + userEnv + 'さん専用シンプルDocker環境**\n' +
-                  '- 🌐 **URL**: ' + url + '\n' +
-                  '- ✨ **美しいデザインがシンプルコンテナで動作中！**\n\n' +
-                  'シンプルDocker環境により、最小構成で確実に動作します！'
-          });
+      - name: シンプルDockerでテスト実行
+        run: |
+          echo "🐳 シンプルDocker環境でテスト実行中..."
+
+          # Dockerビルド
+          docker build -t php-cicd-test .
+
+          # テスト実行
+          docker run --rm -v $PWD:/app -w /app php-cicd-test \
+            sh -c "
+              echo '📦 依存関係確認...'
+              composer install --no-progress
+              
+              echo '🔍 PHP構文チェック...'
+              php -l index.php
+              
+              echo '🛡️ 基本セキュリティチェック...'
+              if grep -E 'eval|exec|system|shell_exec' index.php; then
+                echo '❌ 危険な関数検出'
+                exit 1
+              fi
+              
+              echo '🧪 PHPUnitテスト実行（2つのテスト）...'
+              composer test
+              
+              echo '✅ 全テスト完了'
+            "
+
+      - name: EC2にシンプルDockerデプロイ
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            USER_ENV="${{ steps.get_user.outputs.user_env }}"
+
+            echo "🐳 $USER_ENV 環境にシンプルDockerデプロイ開始..."
+
+            # 最新コード取得
+            cd /tmp
+            rm -rf simple-php-cicd
+            git clone https://github.com/${{ github.repository }}.git simple-php-cicd
+            cd simple-php-cicd
+
+            # 既存コンテナ停止・削除
+            docker stop cicd-$USER_ENV 2>/dev/null || true
+            docker rm cicd-$USER_ENV 2>/dev/null || true
+
+            # Dockerイメージビルド
+            docker build -t php-cicd-$USER_ENV .
+
+            # ポート番号決定
+            case $USER_ENV in
+              alice) PORT=8001 ;;
+              bob) PORT=8002 ;;
+              charlie) PORT=8003 ;;
+              diana) PORT=8004 ;;
+              *) PORT=8000 ;;
+            esac
+
+            # シンプルDockerコンテナ起動
+            docker run -d \
+              --name cicd-$USER_ENV \
+              -p $PORT:80 \
+              php-cicd-$USER_ENV
+
+            # ヘルスチェック
+            sleep 5
+            if curl -f http://localhost:$PORT/ > /dev/null 2>&1; then
+              echo "✅ $USER_ENV 環境ヘルスチェック成功"
+            else
+              echo "❌ $USER_ENV 環境ヘルスチェック失敗"
+              exit 1
+            fi
+
+            echo "🎉 シンプルDockerデプロイ完了: https://${{ secrets.EC2_HOST }}:$PORT/"
+
+      - name: デプロイ成功通知
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const userEnv = '${{ steps.get_user.outputs.user_env }}';
+            const portMap = {alice: 8001, bob: 8002, charlie: 8003, diana: 8004};
+            const port = portMap[userEnv] || 8000;
+            const url = 'https://${{ secrets.EC2_HOST }}:' + port + '/';
+
+            await github.rest.issues.createComment({
+              issue_number: context.payload.pull_request.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🎉 **シンプルDocker CI/CDパイプライン完了!!**\n\n' +
+                    '**テスト結果** ✅\n' +
+                    '- ✅ シンプルDocker環境でビルド成功\n' +
+                    '- ✅ PHP構文チェック通過\n' +
+                    '- ✅ セキュリティチェック通過  \n' +
+                    '- ✅ 2つのPHPUnitテスト通過\n\n' +
+                    '**デプロイ結果** 🐳\n' +
+                    '- 👤 **' + userEnv + 'さん専用シンプルDocker環境**\n' +
+                    '- 🌐 **URL**: ' + url + '\n' +
+                    '- ✨ **美しいデザインがシンプルコンテナで動作中！**\n\n' +
+                    'シンプルDocker環境により、最小構成で確実に動作します！'
+            });
