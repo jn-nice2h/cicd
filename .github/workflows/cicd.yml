@@ -68,9 +68,9 @@ jobs:
 
             # 最新コード取得
             cd /tmp
-            rm -rf simple-php-cicd
-            git clone https://github.com/${{ github.repository }}.git simple-php-cicd
-            cd simple-php-cicd
+            rm -rf cicd
+            git clone https://github.com/${{ github.repository }}.git cicd
+            cd cicd
 
             # 既存コンテナ停止・削除
             docker stop cicd-$USER_ENV 2>/dev/null || true
