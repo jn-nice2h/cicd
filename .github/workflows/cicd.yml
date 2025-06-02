@@ -64,7 +64,7 @@ jobs:
           script: |
             USER_ENV="${{ steps.get_user.outputs.user_env }}"
 
-            echo "🐳 $USER_ENV 環境にシンプルDockerデプロイ開始... "
+            echo "🐳 $USER_ENV 環境にシンプルDockerデプロイ開始..."
 
             # 最新コード取得
             cd /tmp
