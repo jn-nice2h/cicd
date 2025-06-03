@@ -67,7 +67,7 @@ jobs:
               echo '✅ 全テスト完了'
             "
 
-- name: EC2にシンプルDockerデプロイ（ポート情報明示）
+    - name: EC2にシンプルDockerデプロイ（ポート情報明示）
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: ${{ secrets.EC2_HOST }}
