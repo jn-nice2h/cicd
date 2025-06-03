@@ -31,7 +31,7 @@ if ($_POST['message'] ?? false) {
         
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
             min-height: 100vh;
             padding: 20px;
             color: #333;
@@ -142,13 +142,13 @@ if ($_POST['message'] ?? false) {
         
         textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #4CAF50;
             background: white;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
         }
         
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
             color: white;
             border: none;
             padding: 1rem 2rem;
@@ -166,7 +166,7 @@ if ($_POST['message'] ?? false) {
         
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
         }
         
         .btn:active {
@@ -185,7 +185,7 @@ if ($_POST['message'] ?? false) {
         
         .message-item {
             background: #f8f9fa;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #4CAF50;
             padding: 1rem 1.5rem;
             margin-bottom: 1rem;
             border-radius: 8px;
@@ -210,7 +210,7 @@ if ($_POST['message'] ?? false) {
         }
         
         .message-time {
-            color: #667eea;
+            color: #4CAF50;
             font-weight: 600;
             font-size: 0.9rem;
         }
