@@ -21,6 +21,11 @@ if ($_POST['message'] ?? false) {
 <head>
     <meta charset="UTF-8">
     <title>シンプル掲示板</title>
+    <style>
+        body {
+            background-color: green;
+        }
+    </style>
 </head>
 <body>
     <h1>シンプル掲示板</h1>
@@ -30,7 +35,7 @@ if ($_POST['message'] ?? false) {
     <?php endif; ?>
     
     <form method="POST">
-        <textarea name="message" placeholder="メッセージを入力" required></textarea><br>
+        <textarea name="message" placeholder="メッセージを入力 " required></textarea><br>
         <button type="submit">投稿</button>
     </form>
     
