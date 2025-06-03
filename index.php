@@ -20,7 +20,7 @@ if ($_POST['message'] ?? false) {
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>シンプル掲示板</title>
+    <title>シンプル掲示板2025</title>
     <style>
         body {
             background-color: green;
@@ -31,7 +31,7 @@ if ($_POST['message'] ?? false) {
     <h1>シンプル掲示板</h1>
     
     <?php if (isset($success)): ?>
-        <p style="color: green;">投稿しました！</p>
+        <p style="color: green;">投稿完了</p>
     <?php endif; ?>
     
     <form method="POST">
