@@ -23,7 +23,7 @@ if ($_POST['message'] ?? false) {
     <title>シンプル掲示板(中島)</title>
 </head>
 <body>
-    <h1>シンプル掲示板</h1>
+    <h1>【テスト】シンプル掲示板</h1>
     
     <?php if (isset($success)): ?>
         <p style="color: green;">投稿しました！</p>
