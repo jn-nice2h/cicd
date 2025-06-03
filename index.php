@@ -20,12 +20,7 @@ if ($_POST['message'] ?? false) {
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>シンプル掲示板</title>
-    <style>
-        body {
-            background-color: green;
-        }
-    </style>
+    <title>シンプル掲示板(中島)</title>
 </head>
 <body>
     <h1>シンプル掲示板</h1>
