@@ -31,11 +31,11 @@ jobs:
         id: calculate_port
         run: |
           USER_ENV="${{ steps.get_user.outputs.user_env }}"
-          
+
           # ブランチ名からハッシュ値計算してポート決定
           HASH=$(echo -n "$USER_ENV" | cksum | cut -f1 -d' ')
           CALCULATED_PORT=$((8001 + HASH % 50))  # 8001-8050の範囲
-          
+
           echo "calculated_port=$CALCULATED_PORT" >> $GITHUB_OUTPUT
           echo "🔢 $USER_ENV → 計算ポート: $CALCULATED_PORT"
 
@@ -67,106 +67,106 @@ jobs:
               echo '✅ 全テスト完了'
             "
 
-    - name: EC2にシンプルDockerデプロイ（ポート情報明示）
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          USER_ENV="${{ steps.get_user.outputs.user_env }}"
-          CALCULATED_PORT="${{ steps.calculate_port.outputs.calculated_port }}"
-          
-          echo "🐳 === デプロイ開始 ==="
-          echo "👤 ユーザー環境: $USER_ENV"
-          echo "🔢 計算ポート: $CALCULATED_PORT"
-          echo "========================"
-          
-          # 最新コード取得
-          cd /tmp
-          rm -rf cicd
-          git clone https://github.com/${{ github.repository }}.git cicd
-          cd cicd
-          
-          # 使用中ポートチェック・衝突回避
-          FINAL_PORT=$CALCULATED_PORT
-          COLLISION_COUNT=0
-          while netstat -tuln | grep ":$FINAL_PORT " > /dev/null; do
-            COLLISION_COUNT=$((COLLISION_COUNT + 1))
-            echo "⚠️  ポート $FINAL_PORT は使用中（衝突 $COLLISION_COUNT 回目）"
-            FINAL_PORT=$((FINAL_PORT + 1))
-            if [ $FINAL_PORT -gt 8050 ]; then
-              FINAL_PORT=8001  # 範囲をループ
+      - name: EC2にシンプルDockerデプロイ（ポート情報明示）
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            USER_ENV="${{ steps.get_user.outputs.user_env }}"
+            CALCULATED_PORT="${{ steps.calculate_port.outputs.calculated_port }}"
+
+            echo "🐳 === デプロイ開始 ==="
+            echo "👤 ユーザー環境: $USER_ENV"
+            echo "🔢 計算ポート: $CALCULATED_PORT"
+            echo "========================"
+
+            # 最新コード取得
+            cd /tmp
+            rm -rf cicd
+            git clone https://github.com/${{ github.repository }}.git cicd
+            cd cicd
+
+            # 使用中ポートチェック・衝突回避
+            FINAL_PORT=$CALCULATED_PORT
+            COLLISION_COUNT=0
+            while netstat -tuln | grep ":$FINAL_PORT " > /dev/null; do
+              COLLISION_COUNT=$((COLLISION_COUNT + 1))
+              echo "⚠️  ポート $FINAL_PORT は使用中（衝突 $COLLISION_COUNT 回目）"
+              FINAL_PORT=$((FINAL_PORT + 1))
+              if [ $FINAL_PORT -gt 8050 ]; then
+                FINAL_PORT=8001  # 範囲をループ
+              fi
+            done
+
+            echo "✅ 最終決定ポート: $FINAL_PORT"
+            if [ $COLLISION_COUNT -gt 0 ]; then
+              echo "🔄 ポート衝突を $COLLISION_COUNT 回回避しました"
             fi
-          done
-          
-          echo "✅ 最終決定ポート: $FINAL_PORT"
-          if [ $COLLISION_COUNT -gt 0 ]; then
-            echo "🔄 ポート衝突を $COLLISION_COUNT 回回避しました"
-          fi
-          
-          # 既存コンテナ停止・削除
-          if docker ps -a --format '{{.Names}}' | grep -q "^cicd-$USER_ENV$"; then
-            echo "🛑 既存コンテナ cicd-$USER_ENV を停止・削除中..."
-            docker stop cicd-$USER_ENV 2>/dev/null || true
-            docker rm cicd-$USER_ENV 2>/dev/null || true
-          fi
-          
-          # Dockerイメージビルド
-          echo "🔨 Dockerイメージビルド中..."
-          docker build -t php-cicd-$USER_ENV . > /dev/null 2>&1
-          
-          # シンプルDockerコンテナ起動
-          echo "🚀 コンテナ起動中..."
-          docker run -d \
-            --name cicd-$USER_ENV \
-            -p $FINAL_PORT:80 \
-            php-cicd-$USER_ENV
-          
-          # Nginx設定生成（シンプル版）
-          echo "⚙️  Nginx設定生成中..."
-          sudo tee /etc/nginx/conf.d/user-environments/$USER_ENV.conf > /dev/null <<EOF
-          # Auto-generated: $USER_ENV environment
-          location /$USER_ENV/ {
-              proxy_pass http://127.0.0.1:$FINAL_PORT/;
-              proxy_set_header Host \$host;
-              proxy_set_header X-Real-IP \$remote_addr;
-              proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto \$scheme;
-          }
-          location /$USER_ENV {
-              return 301 /$USER_ENV/;
-          }
-          EOF
-          
-          # Nginx設定リロード
-          echo "🔄 Nginx設定リロード中..."
-          sudo nginx -t > /dev/null 2>&1 && sudo systemctl reload nginx
-          
-          # ポートマッピング情報保存
-          echo $FINAL_PORT > /var/www/html/port_mapping/$USER_ENV
-          
-          # ヘルスチェック
-          echo "🏥 ヘルスチェック実行中..."
-          sleep 5
-          
-          if curl -f http://localhost:$FINAL_PORT/ > /dev/null 2>&1; then
-            echo "✅ ヘルスチェック成功"
-          else
-            echo "❌ ヘルスチェック失敗"
-            echo "🔍 デバッグ情報:"
-            echo "   コンテナ状態: $(docker ps --filter name=cicd-$USER_ENV --format '{{.Status}}')"
-            echo "   ポート確認: $(netstat -tuln | grep $FINAL_PORT || echo 'ポート未使用')"
-            exit 1
-          fi
-          
-          echo ""
-          echo "🎉 === デプロイ完了 ==="
-          echo "👤 ユーザー: $USER_ENV"
-          echo "🔢 割り当てポート: $FINAL_PORT"
-          echo "🌐 アクセスURL: http://${{ secrets.EC2_HOST }}/$USER_ENV/"
-          echo "🐳 コンテナ名: cicd-$USER_ENV"
-          echo "========================"
+
+            # 既存コンテナ停止・削除
+            if docker ps -a --format '{{.Names}}' | grep -q "^cicd-$USER_ENV$"; then
+              echo "🛑 既存コンテナ cicd-$USER_ENV を停止・削除中..."
+              docker stop cicd-$USER_ENV 2>/dev/null || true
+              docker rm cicd-$USER_ENV 2>/dev/null || true
+            fi
+
+            # Dockerイメージビルド
+            echo "🔨 Dockerイメージビルド中..."
+            docker build -t php-cicd-$USER_ENV . > /dev/null 2>&1
+
+            # シンプルDockerコンテナ起動
+            echo "🚀 コンテナ起動中..."
+            docker run -d \
+              --name cicd-$USER_ENV \
+              -p $FINAL_PORT:80 \
+              php-cicd-$USER_ENV
+
+            # Nginx設定生成（シンプル版）
+            echo "⚙️  Nginx設定生成中..."
+            sudo tee /etc/nginx/conf.d/user-environments/$USER_ENV.conf > /dev/null <<EOF
+            # Auto-generated: $USER_ENV environment
+            location /$USER_ENV/ {
+                proxy_pass http://127.0.0.1:$FINAL_PORT/;
+                proxy_set_header Host \$host;
+                proxy_set_header X-Real-IP \$remote_addr;
+                proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto \$scheme;
+            }
+            location /$USER_ENV {
+                return 301 /$USER_ENV/;
+            }
+            EOF
+
+            # Nginx設定リロード
+            echo "🔄 Nginx設定リロード中..."
+            sudo nginx -t > /dev/null 2>&1 && sudo systemctl reload nginx
+
+            # ポートマッピング情報保存
+            echo $FINAL_PORT > /var/www/html/port_mapping/$USER_ENV
+
+            # ヘルスチェック
+            echo "🏥 ヘルスチェック実行中..."
+            sleep 5
+
+            if curl -f http://localhost:$FINAL_PORT/ > /dev/null 2>&1; then
+              echo "✅ ヘルスチェック成功"
+            else
+              echo "❌ ヘルスチェック失敗"
+              echo "🔍 デバッグ情報:"
+              echo "   コンテナ状態: $(docker ps --filter name=cicd-$USER_ENV --format '{{.Status}}')"
+              echo "   ポート確認: $(netstat -tuln | grep $FINAL_PORT || echo 'ポート未使用')"
+              exit 1
+            fi
+
+            echo ""
+            echo "🎉 === デプロイ完了 ==="
+            echo "👤 ユーザー: $USER_ENV"
+            echo "🔢 割り当てポート: $FINAL_PORT"
+            echo "🌐 アクセスURL: http://${{ secrets.EC2_HOST }}/$USER_ENV/"
+            echo "🐳 コンテナ名: cicd-$USER_ENV"
+            echo "========================"
 
       - name: デプロイ成功通知
         uses: actions/github-script@v7
