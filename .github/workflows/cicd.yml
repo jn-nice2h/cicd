@@ -26,6 +26,7 @@ jobs:
             echo "❌ 対象外のブランチです"
             exit 1
           fi
+
       - name: 動的ポート計算
             id: calculate_port
             run: |
