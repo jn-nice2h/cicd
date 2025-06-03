@@ -167,29 +167,3 @@ jobs:
             echo "🌐 アクセスURL: http://${{ secrets.EC2_HOST }}/$USER_ENV/"
             echo "🐳 コンテナ名: cicd-$USER_ENV"
             echo "========================"
-
-      - name: デプロイ成功通知
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const userEnv = '${{ steps.get_user.outputs.user_env }}';
-            const portMap = {alice: 8001, bob: 8002, charlie: 8003, diana: 8004};
-            const port = portMap[userEnv] || 8000;
-            const url = 'https://${{ secrets.EC2_HOST }}:' + port + '/';
-
-            await github.rest.issues.createComment({
-              issue_number: context.payload.pull_request.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '🎉 **シンプルDocker CI/CDパイプライン完了!!**\n\n' +
-                    '**テスト結果** ✅\n' +
-                    '- ✅ シンプルDocker環境でビルド成功\n' +
-                    '- ✅ PHP構文チェック通過\n' +
-                    '- ✅ セキュリティチェック通過  \n' +
-                    '- ✅ 2つのPHPUnitテスト通過\n\n' +
-                    '**デプロイ結果** 🐳\n' +
-                    '- 👤 **' + userEnv + 'さん専用シンプルDocker環境**\n' +
-                    '- 🌐 **URL**: ' + url + '\n' +
-                    '- ✨ **美しいデザインがシンプルコンテナで動作中！**\n\n' +
-                    'シンプルDocker環境により、最小構成で確実に動作します！'
-            });
