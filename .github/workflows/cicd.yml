@@ -61,7 +61,7 @@ jobs:
                 exit 1
               fi
               
-              echo '🧪 PHPUnitテスト実行（2つのテスト）...'
+              echo '🧪 PHPUnitテスト実行（2つのテスト）... '
               composer test
               
               echo '✅ 全テスト完了'
