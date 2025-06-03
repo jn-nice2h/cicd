@@ -28,16 +28,16 @@ jobs:
           fi
 
       - name: 動的ポート計算
-            id: calculate_port
-            run: |
-              USER_ENV="${{ steps.get_user.outputs.user_env }}"
-              
-              # ブランチ名からハッシュ値計算してポート決定
-              HASH=$(echo -n "$USER_ENV" | cksum | cut -f1 -d' ')
-              CALCULATED_PORT=$((8001 + HASH % 50))  # 8001-8050の範囲
-              
-              echo "calculated_port=$CALCULATED_PORT" >> $GITHUB_OUTPUT
-              echo "🔢 $USER_ENV → 計算ポート: $CALCULATED_PORT"
+        id: calculate_port
+        run: |
+          USER_ENV="${{ steps.get_user.outputs.user_env }}"
+          
+          # ブランチ名からハッシュ値計算してポート決定
+          HASH=$(echo -n "$USER_ENV" | cksum | cut -f1 -d' ')
+          CALCULATED_PORT=$((8001 + HASH % 50))  # 8001-8050の範囲
+          
+          echo "calculated_port=$CALCULATED_PORT" >> $GITHUB_OUTPUT
+          echo "🔢 $USER_ENV → 計算ポート: $CALCULATED_PORT"
 
       - name: シンプルDockerでテスト実行
         run: |
