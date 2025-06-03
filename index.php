@@ -20,10 +20,8 @@ if ($_POST['message'] ?? false) {
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>モダン掲示板 | 中島</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>シンプル掲示板2025</title>
+
     <style>
         * {
             margin: 0;
@@ -263,66 +261,16 @@ if ($_POST['message'] ?? false) {
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1><i class="fas fa-comments"></i> モダン掲示板</h1>
-            <p>みんなでつながる、新しいコミュニケーション</p>
-        </div>
-        
-        <div class="card">
-            <?php if (isset($success)): ?>
-                <div class="success-message">
-                    <i class="fas fa-check-circle"></i>
-                    メッセージが正常に投稿されました！
-                </div>
-            <?php endif; ?>
-            
-            <form method="POST">
-                <div class="form-group">
-                    <label for="message"><i class="fas fa-pen"></i> 新しいメッセージ</label>
-                    <textarea 
-                        name="message" 
-                        id="message"
-                        placeholder="今何を考えていますか？気軽にメッセージを投稿してください..." 
-                        required
-                    ></textarea>
-                </div>
-                <button type="submit" class="btn">
-                    <i class="fas fa-paper-plane"></i>
-                    投稿する
-                </button>
-            </form>
-        </div>
-        
-        <div class="card messages-section">
-            <h2><i class="fas fa-list"></i> メッセージ一覧</h2>
-            
-            <?php if (empty($messages)): ?>
-                <div class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <p>まだメッセージがありません。<br>最初のメッセージを投稿してみましょう！</p>
-                </div>
-            <?php else: ?>
-                <?php foreach (array_reverse($messages) as $msg): ?>
-                    <?php
-                    $parts = explode(' - ', $msg, 2);
-                    $time = $parts[0] ?? '';
-                    $content = $parts[1] ?? $msg;
-                    ?>
-                    <div class="message-item">
-                        <div class="message-time">
-                            <i class="fas fa-clock"></i> <?= $time ?>
-                        </div>
-                        <div class="message-content"><?= $content ?></div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
-        
-        <div class="footer">
-            <p>© 2025 Modern Message Board by 中島</p>
-        </div>
-    </div>
+    <h1>シンプル掲示板</h1>
+    
+    <?php if (isset($success)): ?>
+        <p style="color: green;">投稿完了</p>
+    <?php endif; ?>
+    
+    <form method="POST">
+        <textarea name="message" placeholder="メッセージを入力 " required></textarea><br>
+        <button type="submit">投稿</button>
+    </form>
     
     <script>
         // フォーム送信後にテキストエリアをクリア
